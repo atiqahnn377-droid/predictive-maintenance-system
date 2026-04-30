@@ -23,6 +23,7 @@
         th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: center; }
         th { background: #0B3D91; color: white; }
     </style>
+
 </head>
 
 <body>
@@ -93,9 +94,58 @@
 
                 <div class="card">
                     <h3>Multi-Sensor Trend</h3>
-                    <canvas id="sensorChart"></canvas>
+
+                    <p>Vibration RMS</p>
+                    <div style="background:#ddd; border-radius:8px">
+                        <div style="width:50%; background:#2196F3; color:white; padding:8px; border-radius:8px;">
+                            0.5
+                        </div>
+                    </div>
+
+                    <p>Temperature Motor</p>
+                    <div style="background:#ddd; border-radius:8px">
+                        <div style="width:60%; background:#E91E63; color:white; padding:8px; border-radius:8px;">
+                            60
+                        </div>
+                    </div>
+
+                    <p>Current Phase Average</p>
+                    <div style="background:#ddd; border-radius:8px">
+                        <div style="width:40%; background:#FF9800; color:white; padding:8px; border-radius:8px;">
+                            10
+                        </div>
+                    </div>
                 </div>
             </div>
+
+        </div>
+        <div class="card">
+            <h3>Model Comparison</h3>
+
+            <p>Random Forest - 99.40%</p>
+            <div style="background: #ddd; border-radius:8px;">
+                <div style="width:99.4%; background:#0B3D91; color:white; padding:8px; border-radius:8px;">
+                    99.40%
+                </div>
+            </div>
+
+            <p>SVM - 96.28%</p>
+            <div style="background:#ddd; border-radius:8px;">
+                <div style="width:96.28%; background:#D71920; color:white; padding:8px; border-radius:8px;">
+                    96.28%
+                </div>
+            </div>
+
+            <p>Logistic Regression - 91.16%</p>
+            <div style="background:#ddd; border-radius:8px;">
+                <div style="width:91.16%; background:#F4A300; color:white; padding:8px; border-radius:8px;">
+                    91.16%
+                </div>
+            </div>
+
+            <h3 style="color: green; margin-top:15px;">
+
+            </h3>
         </div>
 
         <div class="card">
@@ -153,6 +203,29 @@
 <script>
 const ctx = document.getElementById("sensorChart").getContext("2d");
 
+if (modelCtx) {
+    new Chart(modelCtx, {
+        type: "bar",
+        data:{
+            labels: ["Random Forest", "SVM", "Logistic Regression"],
+            datasets: [{
+                label: "Accuracy (%)",
+                data: [99.40, 96.28,91.16],
+                backgroundColor: ["#0B3D91", "#D71920", "#F4A300"]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales:{
+                y:{
+                    min: 80,
+                    max: 100
+                }
+            }
+        }
+    });
+}
 const sensorChart = new Chart(ctx, {
     type: "line",
     data: {
@@ -238,6 +311,41 @@ async function predict() {
 
     document.getElementById("historyTable").innerHTML += row;
 }
+
+// =====================================
+// MODEL COMPARISON CHART 
+// =====================================
+const modelCtx = document.getElementById("modelChart").getContext("2d");
+
+fetch("/model-comparison")
+    .then(response => response.json())
+    .then(data => {
+        new Chart(modelCtx, {
+            type: "bar",
+            data: {
+                labels: ["Random Forest", "SVM", "Logistic Regression"],
+                datasets: [{
+                    label: "Accuracy (%)",
+                    data: [
+                        parselFloat(data["Random Forest Accuracy"]),
+                        parselFloat(data["SVM Accuracy"]),
+                        parselFloat(data["Logistic Regression Accuracy"])
+                        ]
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 80,
+                        max: 100
+                    }
+                }
+            }
+        });
+    });
+
 </script>
 
 </body>

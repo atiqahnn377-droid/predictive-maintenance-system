@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: predictive-maintenance-system
+    env: docker
+    repo: https://github.com/atiqahnn377-droid/predictive-maintenance-system
+    branch: main
