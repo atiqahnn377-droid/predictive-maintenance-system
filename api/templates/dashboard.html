@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Predictive Maintenance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f9; display: flex; }
+        .sidebar { width: 230px; height: 100vh; background: #0B3D91; color: white; padding: 20px; position: fixed; left: 0; top: 0; }
+        .main { flex: 1; padding: 25px; margin-left: 270px; }
+        .card { background: white; padding: 18px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); margin-bottom: 20px; width: 100%; box-sizing: border-box; }
+        .card h2, .card h3 { margin-top: 0; }
+        .grid { display: grid; grid-template-columns: 1.2fr 2fr; gap: 20px; }
+        label { display: block; margin-top: 10px; font-size: 13px; }
+        input { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { margin-top: 20px; width: 100%; padding: 12px; border: none; border-radius: 8px; background: #D71920; color: white; font-weight: bold; cursor: pointer; font-size: 15px; }
+        .result-box { padding: 15px; border-radius: 8px; font-weight: bold; display: none; }
+        .safe { background: #e6f4ea; color: #1b5e20; }
+        .danger { background: #fdecea; color: #b71c1c; }
+        .bar-container { background: #ddd; border-radius: 8px; overflow: hidden; height: 25px; }
+        .bar { height: 25px; width: 0%; background: green; text-align: center; color: white; line-height: 25px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background: #0B3D91; color: white; }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>The System</h2>
+        <p>Dashboard</p>
+        <p>Prediction</p>
+        <p>Alert Monitoring</p>
+        <p>History</p>
+        <p>Model Comparison</p>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <h2>Predictive Maintenance Dashboard</h2>
+            <p>Machine failure prediction using Random Forest, SMOTE, threshold tuning, and Flask API.</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>Input Sensor Data</h3>
+
+                <label>Machine Type</label>
+                <input type="number" id="machine_type" value="0">
+
+                <label>Vibration RMS</label>
+                <input type="number" id="vibration_rms" step="any" value="0.5">
+
+                <label>Temperature Motor</label>
+                <input type="number" id="temperature_motor" step="any" value="60">
+
+                <label>Current Phase Average</label>
+                <input type="number" id="current_phase_avg" step="any" value="10">
+
+                <label>Pressure Level</label>
+                <input type="number" id="pressure_level" step="any" value="30">
+
+                <label>RPM</label>
+                <input type="number" id="rpm" step="any" value="1500">
+
+                <label>Operating Mode</label>
+                <input type="number" id="operating_mode" value="0">
+
+                <label>Hours Since Maintenance</label>
+                <input type="number" id="hours_since_maintenance" step="any" value="100">
+
+                <label>Ambient Temperature</label>
+                <input type="number" id="ambient_temp" step="any" value="30">
+
+                <label>RUL Hours</label>
+                <input type="number" id="rul_hours" step="any" value="50">
+
+                <button onclick="predict()">Run Prediction</button>
+            </div>
+
+            <div>
+                <div class="card">
+                    <h3>Prediction Result</h3>
+                    <div id="resultBox" class="result-box"></div>
+                </div>
+
+                <div class="card">
+                    <h3>Failure Probability</h3>
+                    <div class="bar-container">
+                        <div id="probabilityBar" class="bar">0%</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Multi-Sensor Trend</h3>
+                    <canvas id="sensorChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Prediction History</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Vibration</th>
+                        <th>Temperature</th>
+                        <th>Current</th>
+                        <th>Probability</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTable"></tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Model Comparison</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Accuracy</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>Random Forest</td>
+                        <td>99.40%</td>
+                    </tr>
+
+                    <tr>
+                        <td>SVM</td>
+                        <td>96.28%</td>
+                    </tr>
+
+                    <tr>
+                        <td>Logistic Regression</td>
+                        <td>91.16%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color:green; margin-top:15px;">
+                Best Model: Random Forest
+            </h3>
+        </div>
+    </div>
+
+<script>
+const ctx = document.getElementById("sensorChart").getContext("2d");
+
+const sensorChart = new Chart(ctx, {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [
+            { label: "Vibration RMS", data: [] },
+            { label: "Temperature Motor", data: [] },
+            { label: "Current Phase Avg", data: [] }
+        ]
+    }
+});
+
+async function predict() {
+    let features = [
+        parseFloat(document.getElementById("machine_type").value),
+        parseFloat(document.getElementById("vibration_rms").value),
+        parseFloat(document.getElementById("temperature_motor").value),
+        parseFloat(document.getElementById("current_phase_avg").value),
+        parseFloat(document.getElementById("pressure_level").value),
+        parseFloat(document.getElementById("rpm").value),
+        parseFloat(document.getElementById("operating_mode").value),
+        parseFloat(document.getElementById("hours_since_maintenance").value),
+        parseFloat(document.getElementById("ambient_temp").value),
+        parseFloat(document.getElementById("rul_hours").value)
+    ];
+
+    const response = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ features: features })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    let prob = data.failure_probability;
+    let probPercent = Math.round(prob * 100);
+
+    let resultBox = document.getElementById("resultBox");
+
+    if (data.alert) {
+        resultBox.className = "result-box danger";
+        resultBox.innerText = "⚠️ HIGH FAILURE RISK DETECTED";
+    } else if (data.prediction === 1) {
+        resultBox.className = "result-box danger";
+        resultBox.innerText = "⚠️ Potential failure detected";
+    } else {
+        resultBox.className = "result-box safe";
+        resultBox.innerText = "✅ Machine condition is normal";
+    }
+
+    resultBox.style.display = "block";
+
+    let bar = document.getElementById("probabilityBar");
+    bar.style.width = probPercent + "%";
+    bar.innerText = probPercent + "%";
+    bar.style.background = probPercent > 70 ? "red" : probPercent > 30 ? "orange" : "green";
+
+    let time = new Date().toLocaleTimeString();
+
+    sensorChart.data.labels.push(time);
+    sensorChart.data.datasets[0].data.push(features[1]);
+    sensorChart.data.datasets[1].data.push(features[2]);
+    sensorChart.data.datasets[2].data.push(features[3]);
+    sensorChart.update();
+
+    let status = data.alert ? "High Risk" : data.prediction === 1 ? "Warning" : "Normal";
+
+    let row = `
+        <tr>
+            <td>${time}</td>
+            <td>${features[1]}</td>
+            <td>${features[2]}</td>
+            <td>${features[3]}</td>
+            <td>${probPercent}%</td>
+            <td>${status}</td>
+        </tr>
+    `;
+
+    document.getElementById("historyTable").innerHTML += row;
+}
+</script>
+
+</body>
+</html>
