@@ -5,347 +5,366 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f9; display: flex; }
-        .sidebar { width: 230px; height: 100vh; background: #0B3D91; color: white; padding: 20px; position: fixed; left: 0; top: 0; }
-        .main { flex: 1; padding: 25px; margin-left: 270px; }
-        .card { background: white; padding: 18px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); margin-bottom: 20px; width: 100%; box-sizing: border-box; }
-        .card h2, .card h3 { margin-top: 0; }
-        .grid { display: grid; grid-template-columns: 1.2fr 2fr; gap: 20px; }
-        label { display: block; margin-top: 10px; font-size: 13px; }
-        input { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { margin-top: 20px; width: 100%; padding: 12px; border: none; border-radius: 8px; background: #D71920; color: white; font-weight: bold; cursor: pointer; font-size: 15px; }
-        .result-box { padding: 15px; border-radius: 8px; font-weight: bold; display: none; }
-        .safe { background: #e6f4ea; color: #1b5e20; }
-        .danger { background: #fdecea; color: #b71c1c; }
-        .bar-container { background: #ddd; border-radius: 8px; overflow: hidden; height: 25px; }
-        .bar { height: 25px; width: 0%; background: green; text-align: center; color: white; line-height: 25px; font-size: 13px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background: #0B3D91; color: white; }
-    </style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            display: flex;
+        }
 
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: #0B3D91;
+            color: white;
+            padding: 20px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sidebar p {
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .sidebar p:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .main {
+            margin-left: 290px;
+            padding: 25px;
+            width: calc(100% - 290px);
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #D71920;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #0B3D91;
+            color: white;
+        }
+
+        .bar-container {
+            background: #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 30px;
+        }
+
+        .bar {
+            height: 30px;
+            width: 0%;
+            background: green;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+        }
+    </style>
 </head>
 
 <body>
+
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <h2>The System</h2>
-        <p>Dashboard</p>
-        <p>Prediction</p>
-        <p>Alert Monitoring</p>
-        <p>History</p>
-        <p>Model Comparison</p>
+
+        <p onclick="showSection('dashboard')">Dashboard Overview</p>
+        <p onclick="showSection('prediction')">Prediction Module</p>
+        <p onclick="showSection('alerts')">Alert Monitoring</p>
+        <p onclick="showSection('history')">Prediction History</p>
+        <p onclick="showSection('model')">Model Comparison</p>
+        <p onclick="showSection('dataset')">Dataset Analytics</p>
     </div>
 
+
+    <!-- MAIN -->
     <div class="main">
-        <div class="card">
-            <h2>Predictive Maintenance Dashboard</h2>
-            <p>Machine failure prediction using Random Forest, SMOTE, threshold tuning, and Flask API.</p>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="section active">
+            <div class="card">
+                <h2>Predictive Maintenance Dashboard</h2>
+                <p>
+                    This system predicts machine failure risk using machine learning,
+                    Flask API, Docker deployment, and MLOps integration.
+                </p>
+            </div>
         </div>
 
-        <div class="grid">
+
+        <!-- PREDICTION -->
+        <div id="prediction" class="section">
             <div class="card">
-                <h3>Input Sensor Data</h3>
+                <h2>Prediction Module</h2>
 
                 <label>Machine Type</label>
                 <input type="number" id="machine_type" value="0">
 
                 <label>Vibration RMS</label>
-                <input type="number" id="vibration_rms" step="any" value="0.5">
+                <input type="number" id="vibration_rms" value="0.5">
 
                 <label>Temperature Motor</label>
-                <input type="number" id="temperature_motor" step="any" value="60">
+                <input type="number" id="temperature_motor" value="60">
 
                 <label>Current Phase Average</label>
-                <input type="number" id="current_phase_avg" step="any" value="10">
+                <input type="number" id="current_phase_avg" value="10">
 
                 <label>Pressure Level</label>
-                <input type="number" id="pressure_level" step="any" value="30">
+                <input type="number" id="pressure_level" value="30">
 
                 <label>RPM</label>
-                <input type="number" id="rpm" step="any" value="1500">
+                <input type="number" id="rpm" value="1500">
 
                 <label>Operating Mode</label>
                 <input type="number" id="operating_mode" value="0">
 
                 <label>Hours Since Maintenance</label>
-                <input type="number" id="hours_since_maintenance" step="any" value="100">
+                <input type="number" id="hours_since_maintenance" value="100">
 
                 <label>Ambient Temperature</label>
-                <input type="number" id="ambient_temp" step="any" value="30">
+                <input type="number" id="ambient_temp" value="30">
 
                 <label>RUL Hours</label>
-                <input type="number" id="rul_hours" step="any" value="50">
+                <input type="number" id="rul_hours" value="50">
 
                 <button onclick="predict()">Run Prediction</button>
             </div>
-
-            <div>
-                <div class="card">
-                    <h3>Prediction Result</h3>
-                    <div id="resultBox" class="result-box"></div>
-                </div>
-
-                <div class="card">
-                    <h3>Failure Probability</h3>
-                    <div class="bar-container">
-                        <div id="probabilityBar" class="bar">0%</div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3>Multi-Sensor Trend</h3>
-
-                    <p>Vibration RMS</p>
-                    <div style="background:#ddd; border-radius:8px">
-                        <div style="width:50%; background:#2196F3; color:white; padding:8px; border-radius:8px;">
-                            0.5
-                        </div>
-                    </div>
-
-                    <p>Temperature Motor</p>
-                    <div style="background:#ddd; border-radius:8px">
-                        <div style="width:60%; background:#E91E63; color:white; padding:8px; border-radius:8px;">
-                            60
-                        </div>
-                    </div>
-
-                    <p>Current Phase Average</p>
-                    <div style="background:#ddd; border-radius:8px">
-                        <div style="width:40%; background:#FF9800; color:white; padding:8px; border-radius:8px;">
-                            10
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <div class="card">
-            <h3>Model Comparison</h3>
-
-            <p>Random Forest - 99.40%</p>
-            <div style="background: #ddd; border-radius:8px;">
-                <div style="width:99.4%; background:#0B3D91; color:white; padding:8px; border-radius:8px;">
-                    99.40%
-                </div>
-            </div>
-
-            <p>SVM - 96.28%</p>
-            <div style="background:#ddd; border-radius:8px;">
-                <div style="width:96.28%; background:#D71920; color:white; padding:8px; border-radius:8px;">
-                    96.28%
-                </div>
-            </div>
-
-            <p>Logistic Regression - 91.16%</p>
-            <div style="background:#ddd; border-radius:8px;">
-                <div style="width:91.16%; background:#F4A300; color:white; padding:8px; border-radius:8px;">
-                    91.16%
-                </div>
-            </div>
-
-            <h3 style="color: green; margin-top:15px;">
-
-            </h3>
         </div>
 
-        <div class="card">
-            <h3>Prediction History</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Vibration</th>
-                        <th>Temperature</th>
-                        <th>Current</th>
-                        <th>Probability</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTable"></tbody>
-            </table>
+
+        <!-- ALERTS -->
+        <div id="alerts" class="section">
+            <div class="card">
+                <h2>Alert Monitoring</h2>
+
+                <div id="resultBox" style="padding:15px; border-radius:8px; font-weight:bold;">
+                    No alerts yet.
+                </div>
+
+                <h3>Failure Probability</h3>
+
+                <div class="bar-container">
+                    <div id="probabilityBar" class="bar">0%</div>
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-            <h3>Model Comparison</h3>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Model</th>
-                        <th>Accuracy</th>
-                    </tr>
-                </thead>
+        <!-- HISTORY -->
+        <div id="history" class="section">
+            <div class="card">
+                <h2>Prediction History</h2>
 
-                <tbody>
-                    <tr>
-                        <td>Random Forest</td>
-                        <td>99.40%</td>
-                    </tr>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Vibration</th>
+                            <th>Temperature</th>
+                            <th>Current</th>
+                            <th>Probability</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
 
-                    <tr>
-                        <td>SVM</td>
-                        <td>96.28%</td>
-                    </tr>
-
-                    <tr>
-                        <td>Logistic Regression</td>
-                        <td>91.16%</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3 style="color:green; margin-top:15px;">
-                Best Model: Random Forest
-            </h3>
+                    <tbody id="historyTable"></tbody>
+                </table>
+            </div>
         </div>
+
+
+        <!-- MODEL -->
+        <div id="model" class="section">
+            <div class="card">
+                <h2>Model Comparison</h2>
+
+                <p>Random Forest - 99.40%</p>
+                <div class="bar-container">
+                    <div class="bar" style="width:99.4%; background:#0B3D91;">99.40%</div>
+                </div>
+
+                <p>SVM - 96.28%</p>
+                <div class="bar-container">
+                    <div class="bar" style="width:96.28%; background:#D71920;">96.28%</div>
+                </div>
+
+                <p>Logistic Regression - 91.16%</p>
+                <div class="bar-container">
+                    <div class="bar" style="width:91.16%; background:#F4A300;">91.16%</div>
+                </div>
+
+                <h3 style="color:green; margin-top:20px;">
+                    Best Model: Random Forest
+                </h3>
+            </div>
+        </div>
+
+
+        <!-- DATASET -->
+        <div id="dataset" class="section">
+            <div class="card">
+                <h2>Dataset Analytics</h2>
+
+                <p>Total Records: 24,042</p>
+                <p>Total Features: 15</p>
+                <p>Target Variable: failure_within_24h</p>
+
+                <p>Key Insights:</p>
+                <ul>
+                    <li>High vibration may indicate abnormal wear.</li>
+                    <li>Temperature spikes increase failure probability.</li>
+                    <li>Low RUL suggests urgent maintenance need.</li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 
+
 <script>
-const ctx = document.getElementById("sensorChart").getContext("2d");
+    // ================================
+    // SIDEBAR NAVIGATION
+    // ================================
+    function showSection(sectionId) {
+        let sections = document.querySelectorAll(".section");
 
-if (modelCtx) {
-    new Chart(modelCtx, {
-        type: "bar",
-        data:{
-            labels: ["Random Forest", "SVM", "Logistic Regression"],
-            datasets: [{
-                label: "Accuracy (%)",
-                data: [99.40, 96.28,91.16],
-                backgroundColor: ["#0B3D91", "#D71920", "#F4A300"]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales:{
-                y:{
-                    min: 80,
-                    max: 100
-                }
-            }
-        }
-    });
-}
-const sensorChart = new Chart(ctx, {
-    type: "line",
-    data: {
-        labels: [],
-        datasets: [
-            { label: "Vibration RMS", data: [] },
-            { label: "Temperature Motor", data: [] },
-            { label: "Current Phase Avg", data: [] }
-        ]
-    }
-});
-
-async function predict() {
-    let features = [
-        parseFloat(document.getElementById("machine_type").value),
-        parseFloat(document.getElementById("vibration_rms").value),
-        parseFloat(document.getElementById("temperature_motor").value),
-        parseFloat(document.getElementById("current_phase_avg").value),
-        parseFloat(document.getElementById("pressure_level").value),
-        parseFloat(document.getElementById("rpm").value),
-        parseFloat(document.getElementById("operating_mode").value),
-        parseFloat(document.getElementById("hours_since_maintenance").value),
-        parseFloat(document.getElementById("ambient_temp").value),
-        parseFloat(document.getElementById("rul_hours").value)
-    ];
-
-    const response = await fetch("/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ features: features })
-    });
-
-    const data = await response.json();
-
-    if (data.error) {
-        alert(data.error);
-        return;
-    }
-
-    let prob = data.failure_probability;
-    let probPercent = Math.round(prob * 100);
-
-    let resultBox = document.getElementById("resultBox");
-
-    if (data.alert) {
-        resultBox.className = "result-box danger";
-        resultBox.innerText = "⚠️ HIGH FAILURE RISK DETECTED";
-    } else if (data.prediction === 1) {
-        resultBox.className = "result-box danger";
-        resultBox.innerText = "⚠️ Potential failure detected";
-    } else {
-        resultBox.className = "result-box safe";
-        resultBox.innerText = "✅ Machine condition is normal";
-    }
-
-    resultBox.style.display = "block";
-
-    let bar = document.getElementById("probabilityBar");
-    bar.style.width = probPercent + "%";
-    bar.innerText = probPercent + "%";
-    bar.style.background = probPercent > 70 ? "red" : probPercent > 30 ? "orange" : "green";
-
-    let time = new Date().toLocaleTimeString();
-
-    sensorChart.data.labels.push(time);
-    sensorChart.data.datasets[0].data.push(features[1]);
-    sensorChart.data.datasets[1].data.push(features[2]);
-    sensorChart.data.datasets[2].data.push(features[3]);
-    sensorChart.update();
-
-    let status = data.alert ? "High Risk" : data.prediction === 1 ? "Warning" : "Normal";
-
-    let row = `
-        <tr>
-            <td>${time}</td>
-            <td>${features[1]}</td>
-            <td>${features[2]}</td>
-            <td>${features[3]}</td>
-            <td>${probPercent}%</td>
-            <td>${status}</td>
-        </tr>
-    `;
-
-    document.getElementById("historyTable").innerHTML += row;
-}
-
-// =====================================
-// MODEL COMPARISON CHART 
-// =====================================
-const modelCtx = document.getElementById("modelChart").getContext("2d");
-
-fetch("/model-comparison")
-    .then(response => response.json())
-    .then(data => {
-        new Chart(modelCtx, {
-            type: "bar",
-            data: {
-                labels: ["Random Forest", "SVM", "Logistic Regression"],
-                datasets: [{
-                    label: "Accuracy (%)",
-                    data: [
-                        parselFloat(data["Random Forest Accuracy"]),
-                        parselFloat(data["SVM Accuracy"]),
-                        parselFloat(data["Logistic Regression Accuracy"])
-                        ]
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        min: 80,
-                        max: 100
-                    }
-                }
-            }
+        sections.forEach(section => {
+            section.classList.remove("active");
         });
-    });
 
+        document.getElementById(sectionId).classList.add("active");
+    }
+
+
+    // ================================
+    // PREDICTION FUNCTION
+    // ================================
+    async function predict() {
+
+        let features = [
+            parseFloat(document.getElementById("machine_type").value),
+            parseFloat(document.getElementById("vibration_rms").value),
+            parseFloat(document.getElementById("temperature_motor").value),
+            parseFloat(document.getElementById("current_phase_avg").value),
+            parseFloat(document.getElementById("pressure_level").value),
+            parseFloat(document.getElementById("rpm").value),
+            parseFloat(document.getElementById("operating_mode").value),
+            parseFloat(document.getElementById("hours_since_maintenance").value),
+            parseFloat(document.getElementById("ambient_temp").value),
+            parseFloat(document.getElementById("rul_hours").value)
+        ];
+
+        const response = await fetch("/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                features: features
+            })
+        });
+
+        const data = await response.json();
+
+        let prob = Math.round(data.failure_probability * 100);
+
+        let resultBox = document.getElementById("resultBox");
+
+        if (data.alert) {
+            resultBox.innerHTML = "⚠️ HIGH FAILURE RISK DETECTED";
+            resultBox.style.background = "#fdecea";
+            resultBox.style.color = "#b71c1c";
+        } else {
+            resultBox.innerHTML = "✅ Machine condition is normal";
+            resultBox.style.background = "#e6f4ea";
+            resultBox.style.color = "#1b5e20";
+        }
+
+        let bar = document.getElementById("probabilityBar");
+
+        bar.style.width = prob + "%";
+        bar.innerHTML = prob + "%";
+
+        if (prob > 70) {
+            bar.style.background = "red";
+        } else if (prob > 30) {
+            bar.style.background = "orange";
+        } else {
+            bar.style.background = "green";
+        }
+
+        let time = new Date().toLocaleTimeString();
+
+        let status = data.alert ? "High Risk" : "Normal";
+
+        let row = `
+            <tr>
+                <td>${time}</td>
+                <td>${features[1]}</td>
+                <td>${features[2]}</td>
+                <td>${features[3]}</td>
+                <td>${prob}%</td>
+                <td>${status}</td>
+            </tr>
+        `;
+
+        document.getElementById("historyTable").innerHTML += row;
+
+        showSection("alerts");
+    }
 </script>
 
 </body>
