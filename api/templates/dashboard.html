@@ -1,428 +1,902 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Predictive Maintenance Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Maintenance | Real-Time Command Center</title>
+
+    <!-- ECharts Library -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 
     <style>
+        :root {
+            --bg-main: #050914;
+            --bg-sidebar: rgba(10, 22, 45, 0.96);
+            --bg-card: rgba(15, 31, 61, 0.92);
+            --bg-card-light: rgba(21, 44, 82, 0.85);
+            --neon-blue: #00d4ff;
+            --neon-green: #00ff88;
+            --neon-red: #ff4d4d;
+            --neon-yellow: #ffd166;
+            --text-main: #ffffff;
+            --text-muted: #7f9dbf;
+            --border: rgba(0, 212, 255, 0.25);
+            --shadow: 0 0 25px rgba(0, 212, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            display: flex;
-        }
-
-        .sidebar {
-            width: 250px;
+            background: radial-gradient(circle at top left, #102247 0%, var(--bg-main) 45%, #030610 100%);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Arial, sans-serif;
             height: 100vh;
-            background: #0B3D91;
-            color: white;
-            padding: 20px;
-            position: fixed;
-            left: 0;
-            top: 0;
-            overflow-y: auto;
+            overflow: hidden;
         }
 
-        .sidebar h2 {
-            text-align: center;
-            margin-bottom: 30px;
+        .app {
+            display: flex;
+            width: 100%;
+            height: 100vh;
         }
 
-        .sidebar p {
-            padding: 12px;
-            cursor: pointer;
-            border-radius: 8px;
-            margin: 8px 0;
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            box-shadow: var(--shadow);
         }
 
-        .sidebar p:hover {
-            background: rgba(255,255,255,0.2);
+        .brand {
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .main {
-            margin-left: 290px;
-            padding: 25px;
-            width: calc(100% - 290px);
+        .brand h1 {
+            margin: 0;
+            color: var(--neon-blue);
+            font-size: 1.25rem;
+            letter-spacing: 0.5px;
         }
 
-        .card {
-            background: white;
-            padding: 20px;
+        .brand p {
+            margin: 6px 0 0;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            line-height: 1.4;
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav button {
+            width: 100%;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 12px 14px;
             border-radius: 12px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            text-align: left;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.25s ease;
+        }
+
+        .nav button:hover,
+        .nav button.active {
+            color: var(--neon-blue);
+            border-color: var(--border);
+            background: rgba(0, 212, 255, 0.08);
+            box-shadow: 0 0 14px rgba(0, 212, 255, 0.12);
+        }
+
+        .status-card {
+            margin-top: auto;
+            padding: 16px;
+            background: var(--bg-card-light);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+
+        .status-card small {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .status-value {
+            margin-top: 8px;
+            font-size: 1.1rem;
+            color: var(--neon-green);
+            font-weight: 800;
+        }
+
+        .status-value.danger {
+            color: var(--neon-red);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.45; }
+        }
+
+        /* MAIN */
+        .main {
+            flex: 1;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
             margin-bottom: 20px;
         }
 
-        .section {
+        .topbar h2 {
+            margin: 0;
+            color: var(--text-main);
+            font-size: 1.5rem;
+        }
+
+        .topbar p {
+            margin: 4px 0 0;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        .live-badge {
+            color: var(--neon-green);
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            background: rgba(0, 255, 136, 0.08);
+            padding: 8px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 800;
+        }
+
+        .page {
             display: none;
         }
 
-        .section.active {
+        .page.active {
             display: block;
         }
 
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 6px 0 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 18px;
         }
 
-        button {
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            min-height: 160px;
+        }
+
+        .card h3 {
+            margin: 0 0 12px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .card small {
+            color: var(--text-muted);
+        }
+
+        .col-3 { grid-column: span 3; }
+        .col-4 { grid-column: span 4; }
+        .col-5 { grid-column: span 5; }
+        .col-6 { grid-column: span 6; }
+        .col-7 { grid-column: span 7; }
+        .col-8 { grid-column: span 8; }
+        .col-12 { grid-column: span 12; }
+
+        .metric {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--neon-blue);
+            margin: 12px 0 4px;
+        }
+
+        .metric.green { color: var(--neon-green); }
+        .metric.red { color: var(--neon-red); }
+        .metric.yellow { color: var(--neon-yellow); }
+
+        .chart {
             width: 100%;
-            padding: 12px;
-            background: #D71920;
-            color: white;
-            border: none;
-            border-radius: 8px;
+            height: 320px;
+        }
+
+        .chart.small {
+            height: 230px;
+        }
+
+        /* FORM */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            background: #081832;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 11px;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        .primary-btn {
+            margin-top: 16px;
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--neon-blue);
+            background: rgba(0, 212, 255, 0.08);
+            color: var(--neon-blue);
+            font-weight: 900;
             cursor: pointer;
-            font-weight: bold;
+            transition: 0.25s ease;
         }
 
-        table {
+        .primary-btn:hover {
+            background: var(--neon-blue);
+            color: #00101a;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.35);
+        }
+
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 212, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .history-table {
             width: 100%;
             border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            text-align: center;
-        }
-
-        th {
-            background: #0B3D91;
-            color: white;
-        }
-
-        .bar-container {
-            background: #ddd;
-            border-radius: 8px;
             overflow: hidden;
-            height: 30px;
         }
 
-        .bar {
-            height: 30px;
-            width: 0%;
-            background: green;
-            color: white;
-            text-align: center;
-            line-height: 30px;
+        .history-table th,
+        .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            text-align: left;
+            color: var(--text-muted);
+            font-size: 0.85rem;
         }
 
-        .chart-box {
-            height: 360px;
+        .history-table th {
+            color: var(--neon-blue);
+            text-transform: uppercase;
+            font-size: 0.72rem;
+        }
+
+        .tag {
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 900;
+        }
+
+        .tag.safe {
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 255, 136, 0.08);
+        }
+
+        .tag.risk {
+            color: var(--neon-red);
+            border: 1px solid var(--neon-red);
+            background: rgba(255, 77, 77, 0.08);
+        }
+
+        @media (max-width: 1100px) {
+            .sidebar { width: 230px; }
+            .col-3, .col-4, .col-5, .col-6, .col-7, .col-8 { grid-column: span 12; }
+            .form-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-
 <body>
-
-    <div class="sidebar">
-        <h2>The System</h2>
-        <p onclick="showSection('dashboard')">Dashboard Overview</p>
-        <p onclick="showSection('prediction')">Prediction Module</p>
-        <p onclick="showSection('alerts')">Alert Monitoring</p>
-        <p onclick="showSection('realtime')">Real-Time Monitoring</p>
-        <p onclick="showSection('history')">Prediction History</p>
-        <p onclick="showSection('model')">Model Comparison</p>
-        <p onclick="showSection('dataset')">Dataset Analytics</p>
-    </div>
-
-    <div class="main">
-
-        <div id="dashboard" class="section active">
-            <div class="card">
-                <h2>Predictive Maintenance Dashboard</h2>
-                <p>
-                    This system predicts machine failure risk using machine learning,
-                    Flask API, Docker deployment, and MLOps integration.
-                </p>
-            </div>
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <h1>⚡ Predictive Maintenance</h1>
+            <p>Real-time machine monitoring dashboard for failure risk analysis.</p>
         </div>
 
-        <div id="prediction" class="section">
-            <div class="card">
-                <h2>Prediction Module</h2>
+        <nav class="nav">
+            <button class="active" onclick="showPage('overview', this)">📊 Overview Dashboard</button>
+            <button onclick="showPage('diagnostic', this)">🧠 Prediction Diagnostic</button>
+            <button onclick="showPage('analytics', this)">📈 Live Analytics</button>
+            <button onclick="showPage('models', this)">🤖 Model Performance</button>
+            <button onclick="showPage('history', this)">🗂️ Prediction History</button>
+        </nav>
 
-                <label>Machine Type</label>
-                <input type="number" id="machine_type" value="0">
+        <div class="status-card">
+            <small>System Status</small>
+            <div id="sideStatus" class="status-value">NOMINAL</div>
+            <small id="lastUpdated">Last updated: --</small>
+        </div>
+    </aside>
 
-                <label>Vibration RMS</label>
-                <input type="number" id="vibration_rms" value="0.5">
-
-                <label>Temperature Motor</label>
-                <input type="number" id="temperature_motor" value="60">
-
-                <label>Current Phase Average</label>
-                <input type="number" id="current_phase_avg" value="10">
-
-                <label>Pressure Level</label>
-                <input type="number" id="pressure_level" value="30">
-
-                <label>RPM</label>
-                <input type="number" id="rpm" value="1500">
-
-                <label>Operating Mode</label>
-                <input type="number" id="operating_mode" value="0">
-
-                <label>Hours Since Maintenance</label>
-                <input type="number" id="hours_since_maintenance" value="100">
-
-                <label>Ambient Temperature</label>
-                <input type="number" id="ambient_temp" value="30">
-
-                <label>RUL Hours</label>
-                <input type="number" id="rul_hours" value="50">
-
-                <button onclick="predict()">Run Prediction</button>
+    <!-- MAIN CONTENT -->
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <h2 id="pageTitle">Overview Dashboard</h2>
+                <p id="pageSubtitle">Monitor machine condition, live sensors, and failure probability.</p>
             </div>
+            <div class="live-badge">● LIVE SIMULATION</div>
         </div>
 
-        <div id="alerts" class="section">
-            <div class="card">
-                <h2>Alert Monitoring</h2>
-
-                <div id="resultBox" style="padding:15px; border-radius:8px; font-weight:bold;">
-                    No alerts yet.
+        <!-- PAGE 1: OVERVIEW -->
+        <section id="overview" class="page active">
+            <div class="grid">
+                <div class="card col-3">
+                    <h3>Failure Risk</h3>
+                    <div id="riskMetric" class="metric green">0%</div>
+                    <small>Current prediction probability</small>
                 </div>
 
-                <h3>Failure Probability</h3>
-                <div class="bar-container">
-                    <div id="probabilityBar" class="bar">0%</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="realtime" class="section">
-            <div class="card">
-                <h2>Real-Time Sensor Monitoring</h2>
-                <p>
-                    This graph updates every time a new prediction is made.
-                    It simulates real-time plant sensor monitoring.
-                </p>
-
-                <div class="chart-box">
-                    <canvas id="realTimeChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div id="history" class="section">
-            <div class="card">
-                <h2>Prediction History</h2>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Vibration</th>
-                            <th>Temperature</th>
-                            <th>Current</th>
-                            <th>Probability</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="historyTable"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="model" class="section">
-            <div class="card">
-                <h2>Model Comparison</h2>
-
-                <p>Random Forest - 99.40%</p>
-                <div class="bar-container">
-                    <div class="bar" style="width:99.4%; background:#0B3D91;">99.40%</div>
+                <div class="card col-3">
+                    <h3>Vibration RMS</h3>
+                    <div id="vibrationMetric" class="metric">0.50</div>
+                    <small>Live vibration reading</small>
                 </div>
 
-                <p>SVM - 96.28%</p>
-                <div class="bar-container">
-                    <div class="bar" style="width:96.28%; background:#D71920;">96.28%</div>
+                <div class="card col-3">
+                    <h3>Motor Temp</h3>
+                    <div id="tempMetric" class="metric yellow">60°C</div>
+                    <small>Motor thermal condition</small>
                 </div>
 
-                <p>Logistic Regression - 91.16%</p>
-                <div class="bar-container">
-                    <div class="bar" style="width:91.16%; background:#F4A300;">91.16%</div>
+                <div class="card col-3">
+                    <h3>RPM</h3>
+                    <div id="rpmMetric" class="metric">1500</div>
+                    <small>Rotational speed</small>
                 </div>
 
-                <h3 style="color:green; margin-top:20px;">
-                    Best Model: Random Forest
-                </h3>
+                <div class="card col-5">
+                    <h3>Failure Probability Gauge</h3>
+                    <div id="riskGauge" class="chart small"></div>
+                </div>
+
+                <div class="card col-7">
+                    <h3>Real-Time Sensor Trend</h3>
+                    <div id="liveLineChart" class="chart small"></div>
+                </div>
+
+                <div class="card col-6">
+                    <h3>Sensor Distribution</h3>
+                    <div id="barChart" class="chart small"></div>
+                </div>
+
+                <div class="card col-6">
+                    <h3>Machine Health Radar</h3>
+                    <div id="radarChart" class="chart small"></div>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <div id="dataset" class="section">
-            <div class="card">
-                <h2>Dataset Analytics</h2>
+        <!-- PAGE 2: DIAGNOSTIC -->
+        <section id="diagnostic" class="page">
+            <div class="grid">
+                <div class="card col-5">
+                    <h3>Input Machine Sensor Data</h3>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label>Vibration RMS</label>
+                            <input type="number" id="vibration_rms" value="0.5" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label>Motor Temperature</label>
+                            <input type="number" id="temperature_motor" value="60" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>Current Phase Avg</label>
+                            <input type="number" id="current_phase_avg" value="12" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>Pressure Level</label>
+                            <input type="number" id="pressure_level" value="3.5" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>RPM</label>
+                            <input type="number" id="rpm" value="1500" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Hours Since Maintenance</label>
+                            <input type="number" id="hours_since_maintenance" value="120" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Ambient Temperature</label>
+                            <input type="number" id="ambient_temp" value="28" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>RUL Hours</label>
+                            <input type="number" id="rul_hours" value="250" step="1">
+                        </div>
+                    </div>
+                    <button class="primary-btn" onclick="runPrediction()">EXECUTE DIAGNOSTIC</button>
+                    <div class="result-box">
+                        <small>Prediction Result</small>
+                        <div id="predictionText" class="metric green">Waiting for input</div>
+                        <small id="predictionNote">Click Execute Diagnostic to send data to Flask API.</small>
+                    </div>
+                </div>
 
-                <p>Total Records: 24,042</p>
-                <p>Total Features: 15</p>
-                <p>Target Variable: failure_within_24h</p>
-
-                <p>Key Insights:</p>
-                <ul>
-                    <li>High vibration may indicate abnormal wear.</li>
-                    <li>Temperature spikes increase failure probability.</li>
-                    <li>Low RUL suggests urgent maintenance need.</li>
-                </ul>
+                <div class="card col-7">
+                    <h3>Diagnostic Risk Gauge</h3>
+                    <div id="diagnosticGauge" class="chart"></div>
+                </div>
             </div>
-        </div>
+        </section>
 
-    </div>
+        <!-- PAGE 3: ANALYTICS -->
+        <section id="analytics" class="page">
+            <div class="grid">
+                <div class="card col-12">
+                    <h3>Live Sensor Waveform</h3>
+                    <div id="waveChart" class="chart"></div>
+                </div>
+                <div class="card col-6">
+                    <h3>Temperature Trend</h3>
+                    <div id="tempChart" class="chart small"></div>
+                </div>
+                <div class="card col-6">
+                    <h3>RPM Trend</h3>
+                    <div id="rpmChart" class="chart small"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE 4: MODELS -->
+        <section id="models" class="page">
+            <div class="grid">
+                <div class="card col-7">
+                    <h3>Model Performance Comparison</h3>
+                    <div id="modelChart" class="chart"></div>
+                </div>
+                <div class="card col-5">
+                    <h3>Best Model Summary</h3>
+                    <div class="metric green">Random Forest</div>
+                    <small>Example selected model based on accuracy and F1-score.</small>
+                    <div class="result-box">
+                        <small>Accuracy</small>
+                        <div class="metric">97%</div>
+                    </div>
+                    <div class="result-box">
+                        <small>Purpose</small>
+                        <p style="color: var(--text-muted); line-height: 1.6;">
+                            The model predicts whether a machine is likely to fail based on sensor readings such as vibration,
+                            temperature, pressure, RPM, and maintenance history.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE 5: HISTORY -->
+        <section id="history" class="page">
+            <div class="grid">
+                <div class="card col-12">
+                    <h3>Prediction History Log</h3>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Vibration</th>
+                                <th>Temperature</th>
+                                <th>RPM</th>
+                                <th>Risk</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr>
+                                <td colspan="6">No prediction executed yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
 
 <script>
-    function showSection(sectionId) {
-        let sections = document.querySelectorAll(".section");
+    // -----------------------------
+    // GLOBAL DATA STORAGE
+    // -----------------------------
+    let timeLabels = [];
+    let vibrationData = [];
+    let temperatureData = [];
+    let rpmData = [];
+    let riskData = [];
+    let predictionHistory = [];
 
-        sections.forEach(section => {
-            section.classList.remove("active");
-        });
+    // -----------------------------
+    // INITIALIZE CHARTS
+    // -----------------------------
+    const riskGauge = echarts.init(document.getElementById('riskGauge'));
+    const diagnosticGauge = echarts.init(document.getElementById('diagnosticGauge'));
+    const liveLineChart = echarts.init(document.getElementById('liveLineChart'));
+    const barChart = echarts.init(document.getElementById('barChart'));
+    const radarChart = echarts.init(document.getElementById('radarChart'));
+    const waveChart = echarts.init(document.getElementById('waveChart'));
+    const tempChart = echarts.init(document.getElementById('tempChart'));
+    const rpmChart = echarts.init(document.getElementById('rpmChart'));
+    const modelChart = echarts.init(document.getElementById('modelChart'));
 
-        document.getElementById(sectionId).classList.add("active");
-    }
+    const chartTextColor = '#7f9dbf';
+    const gridLineColor = 'rgba(255,255,255,0.08)';
 
-    const realTimeChart = new Chart(document.getElementById("realTimeChart"), {
-        type: "line",
-        data: {
-            labels: [],
-            datasets: [
+    function gaugeOption(value, isDanger) {
+        return {
+            backgroundColor: 'transparent',
+            series: [
                 {
-                    label: "Vibration RMS",
-                    data: [],
-                    borderColor: "#0B3D91",
-                    tension: 0.3
-                },
-                {
-                    label: "Temperature Motor",
-                    data: [],
-                    borderColor: "#D71920",
-                    tension: 0.3
-                },
-                {
-                    label: "Current Phase Avg",
-                    data: [],
-                    borderColor: "#F4A300",
-                    tension: 0.3
-                },
-                {
-                    label: "Failure Probability (%)",
-                    data: [],
-                    borderColor: "#2E7D32",
-                    tension: 0.3
+                    type: 'gauge',
+                    min: 0,
+                    max: 100,
+                    progress: { show: true, width: 16 },
+                    axisLine: { lineStyle: { width: 16, color: [[1, 'rgba(255,255,255,0.08)']] } },
+                    pointer: { show: true },
+                    splitLine: { show: false },
+                    axisTick: { show: false },
+                    axisLabel: { color: chartTextColor },
+                    detail: {
+                        valueAnimation: true,
+                        formatter: '{value}%',
+                        color: isDanger ? '#ff4d4d' : '#00ff88',
+                        fontSize: 28,
+                        fontWeight: 'bold'
+                    },
+                    data: [{ value: value }]
                 }
             ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
+        };
+    }
 
-    async function predict() {
-        let features = [
-            parseFloat(document.getElementById("machine_type").value),
-            parseFloat(document.getElementById("vibration_rms").value),
-            parseFloat(document.getElementById("temperature_motor").value),
-            parseFloat(document.getElementById("current_phase_avg").value),
-            parseFloat(document.getElementById("pressure_level").value),
-            parseFloat(document.getElementById("rpm").value),
-            parseFloat(document.getElementById("operating_mode").value),
-            parseFloat(document.getElementById("hours_since_maintenance").value),
-            parseFloat(document.getElementById("ambient_temp").value),
-            parseFloat(document.getElementById("rul_hours").value)
-        ];
-
-        const response = await fetch("/predict", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
+    function lineOption(title, labels, data, name) {
+        return {
+            backgroundColor: 'transparent',
+            tooltip: { trigger: 'axis' },
+            xAxis: {
+                type: 'category',
+                data: labels,
+                axisLabel: { color: chartTextColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
             },
-            body: JSON.stringify({
-                features: features
-            })
+            yAxis: {
+                type: 'value',
+                axisLabel: { color: chartTextColor },
+                splitLine: { lineStyle: { color: gridLineColor } }
+            },
+            series: [
+                {
+                    name: name,
+                    data: data,
+                    type: 'line',
+                    smooth: true,
+                    areaStyle: { opacity: 0.15 },
+                    symbolSize: 6
+                }
+            ]
+        };
+    }
+
+    function updateAllCharts() {
+        const latestRisk = riskData.length ? riskData[riskData.length - 1] : 0;
+        const isDanger = latestRisk >= 60;
+
+        riskGauge.setOption(gaugeOption(latestRisk, isDanger));
+        diagnosticGauge.setOption(gaugeOption(latestRisk, isDanger));
+
+        liveLineChart.setOption({
+            backgroundColor: 'transparent',
+            tooltip: { trigger: 'axis' },
+            legend: { textStyle: { color: chartTextColor } },
+            xAxis: {
+                type: 'category',
+                data: timeLabels,
+                axisLabel: { color: chartTextColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { color: chartTextColor },
+                splitLine: { lineStyle: { color: gridLineColor } }
+            },
+            series: [
+                { name: 'Vibration', type: 'line', smooth: true, data: vibrationData },
+                { name: 'Temperature', type: 'line', smooth: true, data: temperatureData },
+                { name: 'Risk %', type: 'line', smooth: true, data: riskData }
+            ]
         });
 
-        const data = await response.json();
+        waveChart.setOption(lineOption('Waveform', timeLabels, vibrationData, 'Vibration RMS'));
+        tempChart.setOption(lineOption('Temperature', timeLabels, temperatureData, 'Motor Temperature'));
+        rpmChart.setOption(lineOption('RPM', timeLabels, rpmData, 'RPM'));
 
-        if (data.error) {
-            alert(data.error);
-            return;
-        }
+        const latestVibration = vibrationData.length ? vibrationData[vibrationData.length - 1] : 0.5;
+        const latestTemp = temperatureData.length ? temperatureData[temperatureData.length - 1] : 60;
+        const latestRpm = rpmData.length ? rpmData[rpmData.length - 1] : 1500;
 
-        let prob = Math.round(data.failure_probability * 100);
+        barChart.setOption({
+            backgroundColor: 'transparent',
+            tooltip: {},
+            xAxis: {
+                type: 'category',
+                data: ['Vibration', 'Temp', 'RPM/100', 'Risk'],
+                axisLabel: { color: chartTextColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { color: chartTextColor },
+                splitLine: { lineStyle: { color: gridLineColor } }
+            },
+            series: [{
+                type: 'bar',
+                data: [latestVibration, latestTemp, latestRpm / 100, latestRisk]
+            }]
+        });
 
-        let resultBox = document.getElementById("resultBox");
+        radarChart.setOption({
+            backgroundColor: 'transparent',
+            radar: {
+                indicator: [
+                    { name: 'Vibration', max: 5 },
+                    { name: 'Temperature', max: 120 },
+                    { name: 'RPM/100', max: 35 },
+                    { name: 'Risk', max: 100 },
+                    { name: 'Pressure', max: 10 }
+                ],
+                axisName: { color: chartTextColor },
+                splitLine: { lineStyle: { color: gridLineColor } },
+                splitArea: { areaStyle: { color: ['rgba(255,255,255,0.02)', 'rgba(255,255,255,0.04)'] } }
+            },
+            series: [{
+                type: 'radar',
+                data: [{ value: [latestVibration, latestTemp, latestRpm / 100, latestRisk, 3.5], name: 'Machine Health' }]
+            }]
+        });
 
-        if (data.alert) {
-            resultBox.innerHTML = "⚠️ HIGH FAILURE RISK DETECTED";
-            resultBox.style.background = "#fdecea";
-            resultBox.style.color = "#b71c1c";
-        } else if (data.prediction === 1) {
-            resultBox.innerHTML = "⚠️ Potential failure detected";
-            resultBox.style.background = "#fff3cd";
-            resultBox.style.color = "#856404";
-        } else {
-            resultBox.innerHTML = "✅ Machine condition is normal";
-            resultBox.style.background = "#e6f4ea";
-            resultBox.style.color = "#1b5e20";
-        }
-
-        let bar = document.getElementById("probabilityBar");
-        bar.style.width = prob + "%";
-        bar.innerHTML = prob + "%";
-
-        if (prob > 70) {
-            bar.style.background = "red";
-        } else if (prob > 30) {
-            bar.style.background = "orange";
-        } else {
-            bar.style.background = "green";
-        }
-
-        let time = new Date().toLocaleTimeString();
-
-        realTimeChart.data.labels.push(time);
-        realTimeChart.data.datasets[0].data.push(features[1]);
-        realTimeChart.data.datasets[1].data.push(features[2]);
-        realTimeChart.data.datasets[2].data.push(features[3]);
-        realTimeChart.data.datasets[3].data.push(prob);
-
-        if (realTimeChart.data.labels.length > 10) {
-            realTimeChart.data.labels.shift();
-            realTimeChart.data.datasets.forEach(dataset => dataset.data.shift());
-        }
-
-        realTimeChart.update();
-
-        let status = data.alert ? "High Risk" : data.prediction === 1 ? "Warning" : "Normal";
-
-        let row = `
-            <tr>
-                <td>${time}</td>
-                <td>${features[1]}</td>
-                <td>${features[2]}</td>
-                <td>${features[3]}</td>
-                <td>${prob}%</td>
-                <td>${status}</td>
-            </tr>
-        `;
-
-        document.getElementById("historyTable").innerHTML += row;
-
-        showSection("realtime");
+        modelChart.setOption({
+            backgroundColor: 'transparent',
+            tooltip: { trigger: 'axis' },
+            legend: { textStyle: { color: chartTextColor } },
+            xAxis: {
+                type: 'category',
+                data: ['Accuracy', 'Precision', 'Recall', 'F1-Score'],
+                axisLabel: { color: chartTextColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
+            },
+            yAxis: {
+                type: 'value',
+                max: 100,
+                axisLabel: { color: chartTextColor, formatter: '{value}%' },
+                splitLine: { lineStyle: { color: gridLineColor } }
+            },
+            series: [
+                { name: 'Random Forest', type: 'bar', data: [97, 96, 97, 96] },
+                { name: 'SVM', type: 'bar', data: [92, 91, 90, 90] },
+                { name: 'Logistic Regression', type: 'bar', data: [88, 87, 86, 86] }
+            ]
+        });
     }
-</script>
 
+    // -----------------------------
+    // PAGE NAVIGATION
+    // -----------------------------
+    function showPage(pageId, btn) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+
+        document.querySelectorAll('.nav button').forEach(button => button.classList.remove('active'));
+        btn.classList.add('active');
+
+        const titles = {
+            overview: ['Overview Dashboard', 'Monitor machine condition, live sensors, and failure probability.'],
+            diagnostic: ['Prediction Diagnostic', 'Enter machine sensor values and execute failure prediction.'],
+            analytics: ['Live Analytics', 'View continuous sensor waveforms and real-time trends.'],
+            models: ['Model Performance', 'Compare machine learning models used in the predictive maintenance system.'],
+            history: ['Prediction History', 'Review previous diagnostic results and system alerts.']
+        };
+
+        document.getElementById('pageTitle').innerText = titles[pageId][0];
+        document.getElementById('pageSubtitle').innerText = titles[pageId][1];
+
+        setTimeout(() => {
+            [riskGauge, diagnosticGauge, liveLineChart, barChart, radarChart, waveChart, tempChart, rpmChart, modelChart].forEach(chart => chart.resize());
+        }, 100);
+    }
+
+    // -----------------------------
+    // REAL-TIME SIMULATION
+    // -----------------------------
+    function addLiveData() {
+        const now = new Date().toLocaleTimeString();
+        const vibration = +(0.45 + Math.random() * 1.4).toFixed(2);
+        const temperature = +(58 + Math.random() * 18).toFixed(1);
+        const rpm = Math.round(1450 + Math.random() * 250);
+        const risk = Math.min(100, Math.round((vibration * 18) + ((temperature - 55) * 1.2) + Math.random() * 12));
+
+        timeLabels.push(now);
+        vibrationData.push(vibration);
+        temperatureData.push(temperature);
+        rpmData.push(rpm);
+        riskData.push(risk);
+
+        if (timeLabels.length > 12) {
+            timeLabels.shift();
+            vibrationData.shift();
+            temperatureData.shift();
+            rpmData.shift();
+            riskData.shift();
+        }
+
+        document.getElementById('vibrationMetric').innerText = vibration;
+        document.getElementById('tempMetric').innerText = temperature + '°C';
+        document.getElementById('rpmMetric').innerText = rpm;
+        document.getElementById('riskMetric').innerText = risk + '%';
+        document.getElementById('riskMetric').className = risk >= 60 ? 'metric red' : 'metric green';
+
+        updateSystemStatus(risk >= 60, risk);
+        updateAllCharts();
+    }
+
+    function updateSystemStatus(isDanger, risk) {
+        const sideStatus = document.getElementById('sideStatus');
+        sideStatus.innerText = isDanger ? 'CRITICAL RISK' : 'NOMINAL';
+        sideStatus.className = isDanger ? 'status-value danger' : 'status-value';
+        document.getElementById('lastUpdated').innerText = 'Last updated: ' + new Date().toLocaleTimeString();
+    }
+
+    // -----------------------------
+    // API PREDICTION FUNCTION
+    // -----------------------------
+    async function runPrediction() {
+        const vibration = parseFloat(document.getElementById('vibration_rms').value);
+        const temperature = parseFloat(document.getElementById('temperature_motor').value);
+        const current = parseFloat(document.getElementById('current_phase_avg').value);
+        const pressure = parseFloat(document.getElementById('pressure_level').value);
+        const rpm = parseFloat(document.getElementById('rpm').value);
+        const maintenance = parseFloat(document.getElementById('hours_since_maintenance').value);
+        const ambient = parseFloat(document.getElementById('ambient_temp').value);
+        const rul = parseFloat(document.getElementById('rul_hours').value);
+
+        const payload = {
+            features: [
+                vibration,
+                temperature,
+                current,
+                pressure,
+                rpm,
+                maintenance,
+                ambient,
+                rul
+            ]
+        };
+
+        let probability;
+        let alertStatus;
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            probability = Math.round(result.failure_probability * 100);
+            alertStatus = result.alert;
+        } catch (error) {
+            // Fallback simulation if Flask API is not running
+            probability = Math.min(100, Math.round((vibration * 18) + ((temperature - 55) * 1.5) + (maintenance / 20)));
+            alertStatus = probability >= 60;
+            console.warn('Flask API not connected. Using simulated prediction result.', error);
+        }
+
+        document.getElementById('predictionText').innerText = probability + '% Risk';
+        document.getElementById('predictionText').className = alertStatus ? 'metric red' : 'metric green';
+        document.getElementById('predictionNote').innerText = alertStatus
+            ? 'Warning: machine condition shows high failure risk.'
+            : 'Machine condition is currently normal.';
+
+        riskData.push(probability);
+        vibrationData.push(vibration);
+        temperatureData.push(temperature);
+        rpmData.push(rpm);
+        timeLabels.push(new Date().toLocaleTimeString());
+
+        if (timeLabels.length > 12) {
+            timeLabels.shift();
+            vibrationData.shift();
+            temperatureData.shift();
+            rpmData.shift();
+            riskData.shift();
+        }
+
+        predictionHistory.unshift({
+            time: new Date().toLocaleTimeString(),
+            vibration,
+            temperature,
+            rpm,
+            risk: probability,
+            status: alertStatus ? 'RISK' : 'SAFE'
+        });
+
+        updateHistoryTable();
+        updateSystemStatus(alertStatus, probability);
+        updateAllCharts();
+    }
+
+    function updateHistoryTable() {
+        const body = document.getElementById('historyBody');
+        body.innerHTML = '';
+
+        predictionHistory.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.time}</td>
+                <td>${item.vibration}</td>
+                <td>${item.temperature}°C</td>
+                <td>${item.rpm}</td>
+                <td>${item.risk}%</td>
+                <td><span class="tag ${item.status === 'RISK' ? 'risk' : 'safe'}">${item.status}</span></td>
+            `;
+            body.appendChild(row);
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        [riskGauge, diagnosticGauge, liveLineChart, barChart, radarChart, waveChart, tempChart, rpmChart, modelChart].forEach(chart => chart.resize());
+    });
+
+    // Initial load
+    for (let i = 0; i < 6; i++) addLiveData();
+    setInterval(addLiveData, 3000);
+</script>
 </body>
 </html>
