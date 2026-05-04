@@ -112,28 +112,28 @@
             text-align: center;
             line-height: 30px;
         }
+
+        .chart-box {
+            height: 360px;
+        }
     </style>
 </head>
 
 <body>
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
         <h2>The System</h2>
-
         <p onclick="showSection('dashboard')">Dashboard Overview</p>
         <p onclick="showSection('prediction')">Prediction Module</p>
         <p onclick="showSection('alerts')">Alert Monitoring</p>
+        <p onclick="showSection('realtime')">Real-Time Monitoring</p>
         <p onclick="showSection('history')">Prediction History</p>
         <p onclick="showSection('model')">Model Comparison</p>
         <p onclick="showSection('dataset')">Dataset Analytics</p>
     </div>
 
-
-    <!-- MAIN -->
     <div class="main">
 
-        <!-- DASHBOARD -->
         <div id="dashboard" class="section active">
             <div class="card">
                 <h2>Predictive Maintenance Dashboard</h2>
@@ -144,8 +144,6 @@
             </div>
         </div>
 
-
-        <!-- PREDICTION -->
         <div id="prediction" class="section">
             <div class="card">
                 <h2>Prediction Module</h2>
@@ -184,8 +182,6 @@
             </div>
         </div>
 
-
-        <!-- ALERTS -->
         <div id="alerts" class="section">
             <div class="card">
                 <h2>Alert Monitoring</h2>
@@ -195,15 +191,26 @@
                 </div>
 
                 <h3>Failure Probability</h3>
-
                 <div class="bar-container">
                     <div id="probabilityBar" class="bar">0%</div>
                 </div>
             </div>
         </div>
 
+        <div id="realtime" class="section">
+            <div class="card">
+                <h2>Real-Time Sensor Monitoring</h2>
+                <p>
+                    This graph updates every time a new prediction is made.
+                    It simulates real-time plant sensor monitoring.
+                </p>
 
-        <!-- HISTORY -->
+                <div class="chart-box">
+                    <canvas id="realTimeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
         <div id="history" class="section">
             <div class="card">
                 <h2>Prediction History</h2>
@@ -225,8 +232,6 @@
             </div>
         </div>
 
-
-        <!-- MODEL -->
         <div id="model" class="section">
             <div class="card">
                 <h2>Model Comparison</h2>
@@ -252,8 +257,6 @@
             </div>
         </div>
 
-
-        <!-- DATASET -->
         <div id="dataset" class="section">
             <div class="card">
                 <h2>Dataset Analytics</h2>
@@ -273,11 +276,7 @@
 
     </div>
 
-
 <script>
-    // ================================
-    // SIDEBAR NAVIGATION
-    // ================================
     function showSection(sectionId) {
         let sections = document.querySelectorAll(".section");
 
@@ -288,12 +287,49 @@
         document.getElementById(sectionId).classList.add("active");
     }
 
+    const realTimeChart = new Chart(document.getElementById("realTimeChart"), {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: "Vibration RMS",
+                    data: [],
+                    borderColor: "#0B3D91",
+                    tension: 0.3
+                },
+                {
+                    label: "Temperature Motor",
+                    data: [],
+                    borderColor: "#D71920",
+                    tension: 0.3
+                },
+                {
+                    label: "Current Phase Avg",
+                    data: [],
+                    borderColor: "#F4A300",
+                    tension: 0.3
+                },
+                {
+                    label: "Failure Probability (%)",
+                    data: [],
+                    borderColor: "#2E7D32",
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
 
-    // ================================
-    // PREDICTION FUNCTION
-    // ================================
     async function predict() {
-
         let features = [
             parseFloat(document.getElementById("machine_type").value),
             parseFloat(document.getElementById("vibration_rms").value),
@@ -319,6 +355,11 @@
 
         const data = await response.json();
 
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
         let prob = Math.round(data.failure_probability * 100);
 
         let resultBox = document.getElementById("resultBox");
@@ -327,6 +368,10 @@
             resultBox.innerHTML = "⚠️ HIGH FAILURE RISK DETECTED";
             resultBox.style.background = "#fdecea";
             resultBox.style.color = "#b71c1c";
+        } else if (data.prediction === 1) {
+            resultBox.innerHTML = "⚠️ Potential failure detected";
+            resultBox.style.background = "#fff3cd";
+            resultBox.style.color = "#856404";
         } else {
             resultBox.innerHTML = "✅ Machine condition is normal";
             resultBox.style.background = "#e6f4ea";
@@ -334,7 +379,6 @@
         }
 
         let bar = document.getElementById("probabilityBar");
-
         bar.style.width = prob + "%";
         bar.innerHTML = prob + "%";
 
@@ -348,7 +392,20 @@
 
         let time = new Date().toLocaleTimeString();
 
-        let status = data.alert ? "High Risk" : "Normal";
+        realTimeChart.data.labels.push(time);
+        realTimeChart.data.datasets[0].data.push(features[1]);
+        realTimeChart.data.datasets[1].data.push(features[2]);
+        realTimeChart.data.datasets[2].data.push(features[3]);
+        realTimeChart.data.datasets[3].data.push(prob);
+
+        if (realTimeChart.data.labels.length > 10) {
+            realTimeChart.data.labels.shift();
+            realTimeChart.data.datasets.forEach(dataset => dataset.data.shift());
+        }
+
+        realTimeChart.update();
+
+        let status = data.alert ? "High Risk" : data.prediction === 1 ? "Warning" : "Normal";
 
         let row = `
             <tr>
@@ -363,7 +420,7 @@
 
         document.getElementById("historyTable").innerHTML += row;
 
-        showSection("alerts");
+        showSection("realtime");
     }
 </script>
 
