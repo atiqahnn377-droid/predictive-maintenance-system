@@ -1,7 +1,7 @@
 # ===============================
 # IMPORT LIBRARIES
 # ===============================
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect
 import joblib
 import numpy as np
 
@@ -31,7 +31,7 @@ ALERT_THRESHOLD = 0.7
 # ===============================
 @app.route("/")
 def home():
-    return "Predictive Maintenance API is running."
+    return redirect("/dashboard")
 
 
 # ===============================
